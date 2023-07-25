@@ -134,3 +134,40 @@ for i in dbutils.fs.ls("/FileStore/Data/Folder/Subfolder/"):
 
   dbutils.fs.rm(i[0], True)
 
+
+# In[ ]:
+
+
+# # ITERATING THROUGH FOLDER FOR READING EXCEL FILES, WITH AN ADDITIONAL STEP WHICH DROPS ALL ROWS FROM THE FIRST NULL VALUE IN COLUMN A
+
+li = []
+
+os.chdir(r'/dbfs/FileStore/Data/***/****/')
+
+ 
+
+allFiles = glob.glob("*.xlsx")
+
+ 
+
+for file in allFiles :
+
+  df = pd.read_excel(file, engine='openpyxl', skiprows=5)
+
+  # Find the row number of the first null cell in column A
+
+  first_null_row = df[df['Column A'].isnull()].index[0]
+
+  # Calculate the number of rows to skip from the end
+
+  skip_from_end = len(df) - first_null_row
+
+  # Read the file again, skipping the appropriate number of rows from the end
+
+  df = pd.read_excel(file, engine = 'openpyxl', skiprows=5, skipfooter=skip_from_end)
+
+  li.append(df)
+
+  # Concat files into one Dataframe
+
+  Evaluate_Pharma = pd.concat(li)
