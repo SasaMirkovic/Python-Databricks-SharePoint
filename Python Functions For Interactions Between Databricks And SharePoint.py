@@ -93,6 +93,39 @@ def upload_to_sharepoint(site_url, relative_url, dataframe, folder_name, file_na
 # In[ ]:
 
 
+# UPLOADING CSV TO SHARE POINT
+
+def upload_to_sharepoint(site_url, relative_url, dataframe, file_name):
+
+    try:
+        credentials = ClientCredential("*****", "******")
+        ctx = ClientContext(site_url).with_credentials(credentials)
+
+        # Get the SharePoint folder to upload the file to
+        folder = ctx.web.get_folder_by_server_relative_url(relative_url)
+
+        # Check if the dataframe is already a Pandas dataframe
+        if isinstance(dataframe, pd.DataFrame):
+            pandas_df = dataframe
+        else:
+            # Convert the Spark DataFrame to a pandas DataFrame
+            pandas_df = dataframe.toPandas()
+
+        # Convert the Pandas DataFrame to a CSV string with utf-8 encoding
+        csv_string = pandas_df.to_csv(index=False, encoding='utf-8')
+        csv_bytes = io.BytesIO(csv_string.encode())
+
+        # Upload the CSV file to SharePoint
+        uploaded_file = folder.upload_file(file_name, csv_bytes).execute_query()
+        print("Uploaded file " + uploaded_file.properties["Name"])
+
+    except Exception as e:
+        print(e)
+
+
+# In[ ]:
+
+
 # FUNCTION FOR REMOVING STRING "NaN", "nan" AND "-" VALUES
 
 def replace_nan(df):
