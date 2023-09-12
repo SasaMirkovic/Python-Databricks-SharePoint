@@ -90,34 +90,65 @@ def upload_to_sharepoint(site_url, relative_url, dataframe, folder_name, file_na
         print(e)
 
 
+
 # In[ ]:
 
+# FUNCTION FOR UPLOADING TO SHAREPOINT WHICH TAKES A GIVEN FILE NAME TO DETERMINE FILE TYPE BASED ON THE FILE EXTENSION
 
-# UPLOADING CSV TO SHARE POINT
-
-def upload_to_sharepoint(site_url, relative_url, dataframe, file_name):
-
+def upload_files_to_sharepoint(site_url, relative_url, dataframe, file_name):
     try:
-        credentials = ClientCredential("*****", "******")
+        credentials = ClientCredential("*******", "*******")
         ctx = ClientContext(site_url).with_credentials(credentials)
+
 
         # Get the SharePoint folder to upload the file to
         folder = ctx.web.get_folder_by_server_relative_url(relative_url)
 
         # Check if the dataframe is already a Pandas dataframe
         if isinstance(dataframe, pd.DataFrame):
-            pandas_df = dataframe
+          pandas_df = dataframe
         else:
-            # Convert the Spark DataFrame to a pandas DataFrame
-            pandas_df = dataframe.toPandas()
+          # Convert the Spark DataFrame to a pandas DataFrame and then to a CSV string
+          pandas_df = dataframe.toPandas()
 
-        # Convert the Pandas DataFrame to a CSV string with utf-8 encoding
-        csv_string = pandas_df.to_csv(index=False, encoding='utf-8')
-        csv_bytes = io.BytesIO(csv_string.encode())
+          # Check file extension
+        upload_type = file_name.split('.')[-1]
 
-        # Upload the CSV file to SharePoint
-        uploaded_file = folder.upload_file(file_name, csv_bytes).execute_query()
-        print("Uploaded file " + uploaded_file.properties["Name"])
+          # For PARQUET file
+        if upload_type == 'parquet':
+          # Save the Pandas DataFrame as a Parquet file in memory
+          parquet_bytes = io.BytesIO()
+          table = pa.Table.from_pandas(pandas_df)
+          pq.write_table(table, parquet_bytes)
+
+          parquet_bytes.seek(0)
+ 
+          # Upload the PARQUET file to SharePoint
+          uploaded_file = folder.upload_file(file_name, parquet_bytes).execute_query()
+          print("Uploaded file " + uploaded_file.properties["Name"])
+
+           # For CSV file 
+        if upload_type == 'csv':
+          # Save Pandas DataFrame as CSV file in memory
+          csv_string = pandas_df.to_csv(index = False)
+          csv_bytes = io.BytesIO(csv_string.encode())
+
+           # Upload the CSV file to SharePoint
+          uploaded_file = folder.upload_file(file_name, csv_bytes).execute_query()
+          print("Uploaded file " + uploaded_file.properties["Name"])
+
+            # For XLSX file
+        if upload_type == 'xlsx':
+            # Save Pandas DataFrame as XLSX file in memory
+          excel_bytes = io.BytesIO()
+          with pd.ExcelWriter(excel_bytes, engine = 'openpyxl', mode = 'xlsx', if_sheet_exists = 'replace') as writer:
+            pandas_df.to_excel(writer, index=False)
+
+          excel_bytes.seek(0)
+            
+          # Upload the excel file to SharePoint
+          uploaded_file = folder.upload_file(file_name, excel_bytes).execute_query()
+          print("Uploaded file " + uploaded_file.properties["Name"])
 
     except Exception as e:
         print(e)
@@ -188,19 +219,14 @@ for file in allFiles :
   df = pd.read_excel(file, engine='openpyxl', skiprows=5)
 
   # Find the row number of the first null cell in column A
-
   first_null_row = df[df['Column A'].isnull()].index[0]
 
   # Calculate the number of rows to skip from the end
-
   skip_from_end = len(df) - first_null_row
 
   # Read the file again, skipping the appropriate number of rows from the end
-
   df = pd.read_excel(file, engine = 'openpyxl', skiprows=5, skipfooter=skip_from_end)
-
   li.append(df)
 
   # Concat files into one Dataframe
-
-  Evaluate_Pharma = pd.concat(li)
+  DataFrame = pd.concat(li)
