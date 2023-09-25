@@ -34,13 +34,9 @@ def download_files_to_dbfs(site_url, file_url, dbfs_path):
 # FUNCTION FOR CREATING SHAREPOINT FOLDER
 
 def create_sharepoint_folder (ctx, relative_url, folder_name):
-
   parent_folder = ctx.web.get_folder_by_server_relative_url(relative_url)
-
   new_folder = parent_folder.folders.add(folder_name)
-
   ctx.load(new_folder)
-
   ctx.execute_query()
 
   return new_folder
@@ -175,17 +171,11 @@ def replace_nan(df):
 # ITERATING THROUGH FOLDER FOR READING EXCEL FILES
 
 li = []
-
 os.chdir(r'******')
-
 allFiles = glob.glob("*.xlsx")
-
 for file in allFiles :
-
   df = pd.read_excel(file, sheet_name= '****', engine='openpyxl', skiprows=19, skipfooter = 8, usecols = 'B,F,J:N,P,T')
-
   li.append(df)
-
   Excel_files = pd.concat(li)
 
 
@@ -195,7 +185,6 @@ for file in allFiles :
 # REMOVING FILES FROM DBFS FOLDER
 
 for i in dbutils.fs.ls("/FileStore/Data/Folder/Subfolder/"):
-
   dbutils.fs.rm(i[0], True)
 
 
@@ -205,17 +194,10 @@ for i in dbutils.fs.ls("/FileStore/Data/Folder/Subfolder/"):
 # # ITERATING THROUGH FOLDER FOR READING EXCEL FILES, WITH AN ADDITIONAL STEP WHICH DROPS ALL ROWS FROM THE FIRST NULL VALUE IN COLUMN A
 
 li = []
-
 os.chdir(r'/dbfs/FileStore/Data/***/****/')
-
- 
-
 allFiles = glob.glob("*.xlsx")
 
- 
-
 for file in allFiles :
-
   df = pd.read_excel(file, engine='openpyxl', skiprows=5)
 
   # Find the row number of the first null cell in column A
