@@ -160,7 +160,7 @@ def replace_nan(df):
   for column in df.columns:
 
     # Replace 'NaN' or 'nan' strings with None
-    df[column] = df[column].replace(['NaN', 'nan', '-'], [None, None, None])
+    df[column] = df[column].replace(['NaN', 'nan', '-', 'NaT'], [None, None, None, None])
 
   return df
 
